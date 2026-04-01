@@ -18,11 +18,22 @@ class Rules extends StatelessWidget {
     }
 
     return Card(
-      margin: EdgeInsets.all(10),
+      margin: EdgeInsets.symmetric(horizontal: 0, vertical: 10),
       child: Padding(
         padding: EdgeInsets.all(16),
         child: Column(
-          children: rules.map((e) => Text("✔ $e")).toList(),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Rules to Select Strikes price",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 12),
+            ...rules.map((e) => Text("✔ $e")).toList(),
+          ],
         ),
       ),
     );
