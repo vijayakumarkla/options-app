@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -35,52 +36,71 @@ class _RealtimeNiftyCardState extends State<RealtimeNiftyCard> {
     });
 
     try {
-      // Use NSE India API for NIFTY 50
-      final nseUri = Uri.parse('https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%2050');
-      print('🔍 Fetching from NSE India: $nseUri');
+      // Use CORS proxy for web, direct NSE for native
+      final nseUrl = 'https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%2050';
+      
+      Uri nseUri;
+      if (kIsWeb) {
+        // Use CORS proxy for web browsers
+        final corsProxyUrl = 'https://api.allorigins.win/get?url=${Uri.encodeComponent(nseUrl)}';
+        nseUri = Uri.parse(corsProxyUrl);
+        print('🌐 Fetching via CORS proxy (Web detected)');
+      } else {
+        // Direct NSE for native apps (Android/iOS)
+        nseUri = Uri.parse(nseUrl);
+        print('📱 Fetching direct from NSE (Native detected)');
+      }
+
+      print('🔍 Fetching from: $nseUri');
 
       final nseRes = await http.get(nseUri, headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Accept': 'application/json',
       }).timeout(Duration(seconds: 15));
 
-      print('📡 NSE response status: ${nseRes.statusCode}');
-      print('📄 NSE response body length: ${nseRes.body.length} chars');
+      print('📡 Response status: ${nseRes.statusCode}');
+      print('📄 Response body length: ${nseRes.body.length} chars');
 
       if (nseRes.statusCode == 200) {
-        print('✅ NSE response body length: ${nseRes.body.length}');
-        final data = jsonDecode(nseRes.body);
-        print('📊 NSE data structure: ${data.keys}');
+        print('✅ Response received');
+        
+        // Parse response (unwrap CORS proxy response if needed)
+        String jsonBody = nseRes.body;
+        if (kIsWeb) {
+          // CORS proxy wraps response in {"contents": "..."}
+          final proxyData = jsonDecode(nseRes.body);
+          jsonBody = proxyData['contents'] ?? nseRes.body;
+          print('🔓 Unwrapped proxy response');
+        }
+        
+        final data = jsonDecode(jsonBody);
+        print('📊 Data structure keys: ${data.keys}');
 
         final result = data['data'] as List<dynamic>?;
-        print('🎯 NSE result array: ${result?.length ?? 0} items');
+        print('🎯 Result array: ${result?.length ?? 0} items');
 
         if (result != null && result.isNotEmpty) {
           final niftyData = result[0] as Map<String, dynamic>;
           print('💰 NIFTY data keys: ${niftyData.keys}');
-          print('💰 Full NIFTY data: $niftyData');
+          print('💰 Full data: $niftyData');
 
           final price = niftyData['lastPrice'];
-          print('💵 Price value: $price (type: ${price?.runtimeType})');
+          print('💵 Price: $price');
 
           if (price != null) {
             final fetched = (price as num).toDouble();
-            print('✅ NSE fetched value: $fetched');
+            print('✅ Fetched value: $fetched');
 
             setState(() {
               _nifty = fetched;
               _status = 'Realtime (NSE India)';
             });
             return;
-          } else {
-            print('❌ Price is null in NIFTY data');
           }
-        } else {
-          print('❌ No results in NSE response');
         }
       } else {
-        print('❌ NSE HTTP error: ${nseRes.statusCode}');
-        print('❌ NSE response body: ${nseRes.body}');
+        print('❌ HTTP error: ${nseRes.statusCode}');
+        print('❌ Response: ${nseRes.body}');
       }
 
       throw Exception('NSE API failed');

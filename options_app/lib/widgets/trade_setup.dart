@@ -51,21 +51,33 @@ class TradeSetup extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            "${action.startsWith("Buy") ? "▲" : "▼"} $action",
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
+          Expanded(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                "${action.startsWith("Buy") ? "▲" : "▼"} $action",
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
+              ),
             ),
           ),
           if (price.isNotEmpty) ...[
             SizedBox(width: 8),
-            Text(
-              price,
-              style: TextStyle(
-                color: color,
-                fontSize: 16,
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerRight,
+                child: Text(
+                  price,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 16,
+                  ),
+                ),
               ),
             ),
           ],

@@ -11,8 +11,8 @@ import '../widgets/income_plan.dart';
 
 class HomeScreen extends StatelessWidget {
   final double nifty = 22500;
-  final double vix = 25;
-  final String trend = "Bearish";
+  final double vix = 18;
+  final String trend = "Bullish";
 
   String getMarketType() {
     if (vix > 20 && trend == "Bearish") return "Bearish";
