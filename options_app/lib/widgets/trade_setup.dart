@@ -3,85 +3,138 @@ import 'package:flutter/material.dart';
 class TradeSetup extends StatelessWidget {
   final String type;
   final double nifty;
+  final Map<String, dynamic> trade;
 
-  TradeSetup({required this.type, required this.nifty});
+  const TradeSetup({
+    Key? key,
+    required this.type,
+    required this.nifty,
+    required this.trade,
+  }) : super(key: key);
+
+  Map<String, double> getPnL() {
+    // 🔥 Dummy premium assumptions (can upgrade later)
+    double premium = 50; // average option premium
+
+    switch (type) {
+      case "Bull Call Spread":
+        return {
+          "maxProfit": 100 - premium,
+          "maxLoss": premium,
+        };
+
+      case "Bear Call Spread":
+        return {
+          "maxProfit": premium,
+          "maxLoss": 100 - premium,
+        };
+
+      case "Bull Put Spread":
+        return {
+          "maxProfit": premium,
+          "maxLoss": 100 - premium,
+        };
+
+      case "Bear Put Spread":
+        return {
+          "maxProfit": 100 - premium,
+          "maxLoss": premium,
+        };
+
+      case "Iron Condor":
+        return {
+          "maxProfit": premium,
+          "maxLoss": 200 - premium,
+        };
+
+      default:
+        return {"maxProfit": 0, "maxLoss": 0};
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final pnl = getPnL();
+
     return Card(
-      margin: EdgeInsets.fromLTRB(3, 8, 3, 8),
+      margin: EdgeInsets.all(8),
       child: Padding(
-        padding: EdgeInsets.all(12),
+        padding: EdgeInsets.all(10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Trade Setup",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+            Text("Trade Setup",
+                style: TextStyle(fontWeight: FontWeight.bold)),
+
+            SizedBox(height: 6),
+
+            Text("Strategy: $type"),
+
+            SizedBox(height: 6),
+
+            // 🔹 Strikes
+            if (trade.containsKey("buy"))
+              Text("Buy: ${trade['buy']}"),
+
+            if (trade.containsKey("sell"))
+              Text("Sell: ${trade['sell']}"),
+
+            if (trade.containsKey("sellCE"))
+              Text("Sell CE: ${trade['sellCE']}"),
+
+            if (trade.containsKey("buyCE"))
+              Text("Buy CE: ${trade['buyCE']}"),
+
+            if (trade.containsKey("sellPE"))
+              Text("Sell PE: ${trade['sellPE']}"),
+
+            if (trade.containsKey("buyPE"))
+              Text("Buy PE: ${trade['buyPE']}"),
+
+            Divider(height: 16),
+
+            // 🔥 P&L Section
+            Text("P&L",
+                style: TextStyle(fontWeight: FontWeight.bold)),
+
+            SizedBox(height: 6),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Max Profit:",
+                    style: TextStyle(color: Colors.green)),
+                Text("₹${pnl['maxProfit']!.toStringAsFixed(0)}",
+                    style: TextStyle(color: Colors.green)),
+              ],
             ),
-            SizedBox(height: 12),
-            if (type == "Bullish") ...[
-              _buildOptionBox("Sell PE", "${nifty - 200}", Colors.red),
-              SizedBox(height: 8),
-              _buildOptionBox("Buy PE", "${nifty - 400}", Colors.green),
-            ] else if (type == "Bearish") ...[
-              _buildOptionBox("Sell CE", "${nifty + 200}", Colors.red),
-              SizedBox(height: 8),
-              _buildOptionBox("Buy CE", "${nifty + 400}", Colors.green),
-            ] else ...[
-              _buildOptionBox("Sell PE & CE", "", Colors.red),
-            ],
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Max Loss:",
+                    style: TextStyle(color: Colors.red)),
+                Text("₹${pnl['maxLoss']!.toStringAsFixed(0)}",
+                    style: TextStyle(color: Colors.red)),
+              ],
+            ),
+
+            SizedBox(height: 6),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Risk/Reward:"),
+                Text(
+                  (pnl['maxLoss']! == 0)
+                      ? "-"
+                      : (pnl['maxProfit']! / pnl['maxLoss']!)
+                          .toStringAsFixed(2),
+                ),
+              ],
+            ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildOptionBox(String action, String price, Color color) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        border: Border.all(color: color, width: 2),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Expanded(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                "${action.startsWith("Buy") ? "▲" : "▼"} $action",
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
-              ),
-            ),
-          ),
-          if (price.isNotEmpty) ...[
-            SizedBox(width: 8),
-            Flexible(
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerRight,
-                child: Text(
-                  price,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ],
       ),
     );
   }
